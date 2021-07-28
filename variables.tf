@@ -44,6 +44,11 @@ variable "ssh_user" {
   default     = "ec2-user"
 }
 
+variable "root_block_device_delete_on_termination" {
+  type        = bool
+  default     = true
+  description = "Whether the EBS volume should be destroyed on instance termination"
+}
 variable "root_block_device_encrypted" {
   type        = bool
   default     = true
@@ -210,4 +215,14 @@ variable "instance_profile" {
   type        = string
   description = "A pre-defined profile to attach to the instance (default is to build our own)"
   default     = ""
+}
+
+variable "root_block_device_volume_type" {
+  type        = string
+  default     = "gp3"
+  description = "The volume type for the EBS root volume"
+  validation {
+    condition = contains(["standard", "gp2", "gp3", "io1", "io2", "sc1", "st1"], var.root_block_device_volume_type)
+    error_message = "The root volume must specify a supported EBS type"
+  }
 }
