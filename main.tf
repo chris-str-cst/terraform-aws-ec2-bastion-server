@@ -70,6 +70,8 @@ resource "aws_instance" "default" {
   monitoring                  = var.monitoring
   disable_api_termination     = var.disable_api_termination
 
+  ebs_optimized = var.ebs_optimized
+
   metadata_options {
     http_endpoint               = (var.metadata_http_endpoint_enabled) ? "enabled" : "disabled"
     http_put_response_hop_limit = var.metadata_http_put_response_hop_limit
