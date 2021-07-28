@@ -44,6 +44,12 @@ variable "ssh_user" {
   default     = "ec2-user"
 }
 
+variable "ebs_optimized" {
+  default     = true
+  type        = bool
+  
+}
+
 variable "root_block_device_delete_on_termination" {
   type        = bool
   default     = true
@@ -223,6 +229,6 @@ variable "root_block_device_volume_type" {
   description = "The volume type for the EBS root volume"
   validation {
     condition = contains(["standard", "gp2", "gp3", "io1", "io2", "sc1", "st1"], var.root_block_device_volume_type)
-    error_message = "The root volume must specify a supported EBS type"
+    error_message = "The root volume must specify a supported EBS type."
   }
 }
