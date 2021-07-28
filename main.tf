@@ -68,7 +68,7 @@ module "autoscale_group" {
   iam_instance_profile_name    = local.instance_profile
   associate_public_ip_address  = var.associate_public_ip_address
   key_name                    = var.key_name
-  monitoring                  = var.monitoring
+  enable_monitoring                  = var.monitoring
   disable_api_termination     = var.disable_api_termination
 
   autoscaling_policies_enabled = false
