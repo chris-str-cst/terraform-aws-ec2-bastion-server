@@ -211,3 +211,36 @@ variable "instance_profile" {
   description = "A pre-defined profile to attach to the instance (default is to build our own)"
   default     = ""
 }
+
+variable "block_device_mappings" {
+  description = "Specify volumes to attach to the instance besides the volumes specified by the AMI"
+
+  type = list(object({
+    device_name  = string
+    no_device    = bool
+    virtual_name = string
+    ebs = object({
+      delete_on_termination = bool
+      encrypted             = bool
+      iops                  = number
+      kms_key_id            = string
+      snapshot_id           = string
+      volume_size           = number
+      volume_type           = string
+    })
+  }))
+
+  default = []
+}
+
+variable "max_size" {
+  type        = number
+  description = "The maximum size of the autoscale group"
+  default     = 1
+}
+
+variable "min_size" {
+  type        = number
+  description = "The minimum size of the autoscale group"
+  default     = 1
+}

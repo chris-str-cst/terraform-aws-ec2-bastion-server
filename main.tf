@@ -54,46 +54,49 @@ data "template_file" "user_data" {
     ssh_user    = var.ssh_user
   }
 }
+module "autoscale_group" {
+  source = "cloudposse/ec2-autoscale-group/aws"
+  version = "0.27.0"
 
-resource "aws_instance" "default" {
-  #bridgecrew:skip=BC_AWS_PUBLIC_12: Skipping `EC2 Should Not Have Public IPs` check. NAT instance requires public IP.
-  #bridgecrew:skip=BC_AWS_GENERAL_31: Skipping `Ensure Instance Metadata Service Version 1 is not enabled` check until BridgeCrew support condition evaluation. See https://github.com/bridgecrewio/checkov/issues/793
   count                       = module.this.enabled ? 1 : 0
-  ami                         = data.aws_ami.default.id
-  instance_type               = var.instance_type
-  user_data                   = length(var.user_data_base64) > 0 ? var.user_data_base64 : data.template_file.user_data[0].rendered
-  vpc_security_group_ids      = compact(concat(module.security_group.*.id, var.security_groups))
-  iam_instance_profile        = local.instance_profile
-  associate_public_ip_address = var.associate_public_ip_address
+
+  image_id                     = data.aws_ami.default.id
+  instance_type                = var.instance_type
+  user_data_base64             = length(var.user_data_base64) > 0 ? var.user_data_base64 : base64encode(data.template_file.user_data[0].rendered)
+  subnet_ids                   = var.subnets[0]
+  security_group_ids           = compact(concat(module.security_group.*.id, var.security_groups))
+  iam_instance_profile_name    = local.instance_profile
+  associate_public_ip_address  = var.associate_public_ip_address
   key_name                    = var.key_name
-  subnet_id                   = var.subnets[0]
   monitoring                  = var.monitoring
   disable_api_termination     = var.disable_api_termination
 
-  metadata_options {
-    http_endpoint               = (var.metadata_http_endpoint_enabled) ? "enabled" : "disabled"
-    http_put_response_hop_limit = var.metadata_http_put_response_hop_limit
-    http_tokens                 = (var.metadata_http_tokens_required) ? "required" : "optional"
-  }
+  autoscaling_policies_enabled = false
+  default_alarms_enabled       = false
+  block_device_mappings        = var.block_device_mappings
+  min_size                     = var.min_size
+  max_size                     = var.max_size
+  metadata_http_endpoint_enabled = (var.metadata_http_endpoint_enabled) ? "enabled" : "disabled"
+  metadata_http_put_response_hop_limit = var.metadata_http_put_response_hop_limit
+  metadata_http_tokens_required = (var.metadata_http_tokens_required) ? "required" : "optional"
 
-  root_block_device {
-    encrypted   = var.root_block_device_encrypted
-    volume_size = var.root_block_device_volume_size
-  }
-
-  # Optional block; skipped if var.ebs_block_device_volume_size is zero
-  dynamic "ebs_block_device" {
-    for_each = var.ebs_block_device_volume_size > 0 ? [1] : []
-
-    content {
-      encrypted             = var.ebs_block_device_encrypted
-      volume_size           = var.ebs_block_device_volume_size
-      delete_on_termination = var.ebs_delete_on_termination
-      device_name           = var.ebs_device_name
-    }
-  }
+  ebs_optimized                 = var.ebs_optimized
 
   tags = module.this.tags
+}
+
+data "aws_instance" "instance" {
+  instance_id = "i-instanceid"
+
+  filter {
+    name   = "image-id"
+    values = [data.aws_ami.default.id]
+  }
+
+  filter {
+    name   = "tag:Name"
+    values = [var.name]
+  }
 }
 
 resource "aws_eip" "default" {
